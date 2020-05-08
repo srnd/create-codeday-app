@@ -5,8 +5,10 @@ const Yargs = require('yargs'),
 	latestVersion = require('latest-version'),
 	path = require('path'),
 	fs = require('fs'),
-	rimraf = require('rimraf'),
+	rmfr = require('rmfr'),
 	mkdirp = require('mkdirp');
+
+const L = require('./log');
 
 Yargs
 	.scriptName('create-codeday-app')
@@ -17,7 +19,6 @@ Yargs
 			type: 'string'
 		});
 	}, async argv => {
-		console.log(argv);
 		let dir = path.resolve(argv.dir);
 		if (!await isEmptyDirectory(dir)) {
 			let shouldOverwrite = await inquirer.prompt([{
@@ -26,9 +27,18 @@ Yargs
 				name: 'overwrite',
 				default: false
 			}]);
-			if (!shouldOverwrite) process.exit(0);
+			if (shouldOverwrite.overwrite) {
+				L.warn('delete', dir);
+				await rmfr(dir)
+			} else {
+				process.exit(0);
+			}
 		}
-		
+
+		// Create directory
+		L.cyan('create', dir);
+		await mkdirp(dir);
+
 		// Determine app name
 		let name;
 		if (argv.name) name = argv.name;
