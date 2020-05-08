@@ -1,10 +1,8 @@
 import { DefaultSeo } from 'next-seo';
 import Box from '@codeday/topo/Atom/Box';
-import { Link } from '@codeday/topo/Atom/Text';
-import Header, { SiteLogo, Menu } from '@codeday/topo/Organism/Header';
+import Header, { SiteLogo } from '@codeday/topo/Organism/Header';
 import Footer from '@codeday/topo/Organism/Footer';
 import { CodeDay } from '@codeday/topo/Atom/Logo';
-import Button from '@codeday/topo/Atom/Button';
 
 // TODO: Set production domain
 const DOMAIN = 'https://$APP_NAME$.codeday.org';
