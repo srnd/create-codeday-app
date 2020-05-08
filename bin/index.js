@@ -100,13 +100,13 @@ Yargs
 		// Map of template replacement text
 		const replacementMap = {
 			APP_NAME: name,
-			THEME_PROPS: themeProps.join(' ')
+			THEME_PROPS: themeProps.join(' ') + ' '
 		};
 
 		for (let file of templateFiles) {
 			let contents = (await fs.readFile(path.join(templateDir, file), 'utf8'))
 				.replace(/\$([A-Z_]+)\$/g, (_, replaceName) => {
-					if (replacementMap[replaceName]) {
+					if (replacementMap[replaceName] !== undefined) {
 						return replacementMap[replaceName];
 					} else {
 						L.error('error',`Invalid template text $${replaceName}$ in ${file}, replacing with empty string`);
