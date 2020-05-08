@@ -95,6 +95,12 @@ async function write(dir, file, contents) {
  * @param {String} dir
  */
 async function isEmptyDirectory(dir) {
-	let files = await fs.readdir(dir);
-	return (!files || !files.length);
+	try {
+		let files = await fs.readdir(dir);
+		return (!files || !files.length);
+	} catch (e) {
+		if (e.code === 'ENOENT')
+			return true;
+		else throw e;
+	}
 }
