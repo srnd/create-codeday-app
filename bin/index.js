@@ -127,7 +127,7 @@ Yargs
 
 		L.log('info', 'Installing dependencies')
 		// Install dependencies
-		const child = spawn('yarndd', ['install'], { stdio: 'inherit', cwd: dir });
+		const child = spawn('yarn', ['install'], { stdio: 'inherit', cwd: dir });
 
 		child.on('close', (code) => {
 			if (code === 0) {
