@@ -132,6 +132,7 @@ Yargs
 		child.on('close', (code) => {
 			if (code === 0) {
 				L.green('success', `Project initialized in ${chalk.green(dir)}`);
+				console.log('           ', `Run ${chalk.yellow('cd ' + path.relative(process.cwd(), dir))} and ${chalk.yellow('yarn dev')} to begin development`);
 			}
 		});
 		child.on('error', (err) => {
