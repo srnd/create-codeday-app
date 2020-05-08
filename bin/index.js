@@ -4,7 +4,8 @@ const Yargs = require('yargs'),
 	inquirer = require('inquirer'),
 	latestVersion = require('latest-version'),
 	path = require('path'),
-	fs = require('fs-extra');
+	fs = require('fs-extra'),
+	lsR = require('fs-readdir-recursive');
 
 const L = require('./log');
 
@@ -23,8 +24,22 @@ Yargs
 				type: 'boolean',
 				default: false
 			})
+			.option('chat', {
+				alias: ['c'],
+				describe: 'Enables Chatra (popup chat bubble) on the website',
+				type: 'boolean',
+				default: false
+			})
+			.option('analyticsId', {
+				alias: ['a'],
+				describe: 'Sets the analytics ID provided by Fathom',
+				type: 'string',
+				default: ''
+			});
 	}, async argv => {
 		let dir = path.resolve(argv.dir);
+
+		// Ensure empty directory
 		if (!await isEmptyDirectory(dir)) {
 			let shouldOverwrite = await inquirer.prompt([{
 				type: 'confirm',
@@ -46,9 +61,14 @@ Yargs
 		if (argv.name) name = argv.name;
 		else name = path.basename(dir);
 
+		// Determine props to pass to global <Theme> element
+		let themeProps = [];
+		if (argv.chat) themeProps.push('withChat');
+		if (argv.analyticsId) themeProps.push(`analyticsId="${argv.analyticsId}"`);
+
+		// Get latest dependency versions
 		if (argv.verbose)
 			L.log('fetch', 'Getting latest dependencies');
-		// Get latest dependency versions
 		const deps = ["@codeday/topo", "@codeday/topocons", "next", "next-seo", "prop-types", "react", "react-dom"];
 		const dependencies = {};
 		for (let dep of deps) {
@@ -72,6 +92,29 @@ Yargs
 		await fs.ensureDir(dir);
 
 		await write(dir, 'package.json', JSON.stringify(package, null, 2));
+
+		// Copy template files
+		const templateDir = path.join(__dirname, '..', 'templates/topo');
+		const templateFiles = lsR(templateDir, () => true); // Filter to not ignore .files
+
+		// Map of template replacement text
+		const replacementMap = {
+			APP_NAME: name,
+			THEME_PROPS: themeProps.join(' ')
+		};
+
+		for (let file of templateFiles) {
+			let contents = (await fs.readFile(path.join(templateDir, file), 'utf8'))
+				.replace(/\$([A-Z_]+)\$/g, (_, replaceName) => {
+					if (replacementMap[replaceName]) {
+						return replacementMap[replaceName];
+					} else {
+						L.error('error',`Invalid template text $${replaceName}$ in ${file}, replacing with empty string`);
+						return '';
+					}
+				})
+			await write(dir, file, contents);
+		}
 	})
 	.help()
 	.demandCommand(1, '')
@@ -85,8 +128,11 @@ Yargs
  * @param {String} contents
  */
 async function write(dir, file, contents) {
+	let target = path.join(dir, file);
+
+	await fs.ensureDir(path.dirname(target));
 	L.cyan('create', file);
-	await fs.writeFile(path.join(dir, file), contents);
+	await fs.writeFile(target, contents);
 }
 
 /**
