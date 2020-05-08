@@ -124,6 +124,23 @@ Yargs
 			}
 			await write(dir, file, contents);
 		}
+
+		L.log('info', 'Installing dependencies')
+		// Install dependencies
+		const child = spawn('yarndd', ['install'], { stdio: 'inherit', cwd: dir });
+
+		child.on('close', (code) => {
+			if (code === 0) {
+				L.green('success', `Project initialized in ${chalk.green(dir)}`);
+			}
+		});
+		child.on('error', (err) => {
+			if (err.code === 'ENOENT') {
+				L.error('error', `Yarn is not installed. Please run ${chalk.yellow('npm i -g yarn')} and then ${chalk.yellow('yarn install')}\n         in ${chalk.green(dir)} to install dependencies.`);
+			} else {
+				L.error('error', `Yarn exited with code ${err.code}`);
+			}
+		});
 	})
 	.help()
 	.demandCommand(1, '')
