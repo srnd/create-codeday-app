@@ -28,6 +28,30 @@ Yargs
 			}]);
 			if (!shouldOverwrite) process.exit(0);
 		}
+		
+		// Determine app name
+		let name;
+		if (argv.name) name = argv.name;
+		else name = path.basename(dir);
+
+		// Get latest dependency versions
+		const deps = ["@codeday/topo", "@codeday/topocons", "next", "next-seo", "prop-types", "react", "react-dom"];
+		const dependencies = {};
+		for (let dep of deps) {
+			dependencies[dep] = '^' + await latestVersion(dep);
+		}
+
+		const package = {
+			name,
+			version: "0.0.1",
+			private: true,
+			scripts: {
+				dev: "next dev",
+				build: "next build",
+				start: "next start"
+			},
+			dependencies
+		};
 
 	})
 	.help()
