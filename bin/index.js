@@ -5,7 +5,9 @@ const Yargs = require('yargs'),
 	latestVersion = require('latest-version'),
 	path = require('path'),
 	fs = require('fs-extra'),
-	lsR = require('fs-readdir-recursive');
+	lsR = require('fs-readdir-recursive'),
+	spawn = require('cross-spawn'),
+	chalk = require('chalk');
 
 const L = require('./log');
 
@@ -68,7 +70,7 @@ Yargs
 
 		// Get latest dependency versions
 		if (argv.verbose)
-			L.log('fetch', 'Getting latest dependencies');
+			L.magenta('verbose', 'Getting latest dependencies');
 		const deps = ["@codeday/topo", "@codeday/topocons", "next", "next-seo", "prop-types", "react", "react-dom"];
 		const dependencies = {};
 		for (let dep of deps) {
@@ -103,16 +105,23 @@ Yargs
 			THEME_PROPS: themeProps.join(' ') + ' '
 		};
 
+		// Files to ignore when replacing text (binary files)
+		const ignoreFiles = new Set(['public/favicon.ico']);
+
 		for (let file of templateFiles) {
-			let contents = (await fs.readFile(path.join(templateDir, file), 'utf8'))
-				.replace(/\$([A-Z_]+)\$/g, (_, replaceName) => {
+			let contents = await fs.readFile(path.join(templateDir, file));
+			if (!ignoreFiles.has(file)) {
+				contents = contents.toString('utf8').replace(/\$([A-Z_]+)\$/g, (_, replaceName) => {
 					if (replacementMap[replaceName] !== undefined) {
+						if (argv.verbose)
+							L.magenta('verbose', `Replaced $${replaceName}$ in ${file} with ${chalk.yellow(replacementMap[replaceName])}`);
 						return replacementMap[replaceName];
 					} else {
-						L.error('error',`Invalid template text $${replaceName}$ in ${file}, replacing with empty string`);
+						L.error('warn', `Invalid template text $${replaceName}$ in ${file}, replacing with empty string`);
 						return '';
 					}
-				})
+				});
+			}
 			await write(dir, file, contents);
 		}
 	})
